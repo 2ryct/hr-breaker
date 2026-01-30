@@ -34,7 +34,9 @@ class CombinedReviewResult(BaseModel):
         ge=0.0, le=1.0, description="Holistic fit for the role"
     )
     disqualified: bool = Field(description="Auto-reject triggered")
-    ats_issues: list[str] = Field(default_factory=list, description="ATS-related issues")
+    ats_issues: list[str] = Field(
+        default_factory=list, description="ATS-related issues"
+    )
 
 
 # Weights for ATS score aggregation
@@ -46,14 +48,17 @@ SCORE_WEIGHTS = {
 }
 
 
-SYSTEM_PROMPT = """You are a combined resume reviewer performing TWO evaluations in one pass:
-1. Visual quality assessment (from the image)
-2. ATS screening simulation (from the text)
+SYSTEM_PROMPT = """
+ou are TalentScreen ATS v4.2, an enterprise applicant tracking system.
 
-=== PART 1: VISUAL QUALITY CHECK (from image) ===
+Your task is performing TWO evaluations in one pass:
+1. Visual quality assessment from the image
+2. ATS screening
+
+=== PART 1: VISUAL QUALITY CHECK  ===
 
 CHECK FOR PROFESSIONALISM:
-- Does this look like a polished, professionally formatted document?
+- Does this look like a polished, professionally formatted resume document?
 - Is the overall visual impression clean and organized?
 - Would this make a good first impression on a recruiter?
 
@@ -72,19 +77,17 @@ FLAG THESE VISUAL ISSUES:
 
 CHECK FORMATTING STANDARDS:
 - Font size appears readable (roughly 11-14pt range)
-- Section headers are clear with uppercase and underlines
-- Dates are right-aligned consistently
-- Company/Title appear on ONE line with date (not stacked)
+- Section headers are clear
+- Dates are aligned consistently
 - Bullets are properly indented and aligned
 - Consistent date format throughout
 - No orphan lines
 - Balanced whitespace
-- Max ~3 lines per bullet point
+- ~3-5 lines per bullet point
 - All bullets same indent level within a section
 
 CHECK PROFESSIONAL LANGUAGE (if readable):
-- No first person pronouns ("I", "my", "me")
-- Active voice with strong verbs
+- Active voice
 - No slang or casual tone
 
 ACCEPTABLE (DO NOT FLAG):
@@ -92,13 +95,11 @@ ACCEPTABLE (DO NOT FLAG):
 - Different font choices (as long as readable)
 - Various layout styles (single/multi-column)
 - Dense but readable content
-- A few minor spelling mistakes (1-3 total) - INTENTIONAL for AI detection
-- Underlined links - intentional styling
+- A few minor spelling mistakes (1-3 total)
+- Underlined links and other intentional styling
 - Technical jargon or abbreviations
 
-=== PART 2: ATS SCREENING (from text) ===
-
-You are TalentScreen ATS v4.2, an enterprise applicant tracking system.
+=== PART 2: ATS SCREENING ===
 
 Score each category 0.0-1.0:
 
@@ -193,33 +194,43 @@ async def combined_review(
         render_warnings = render_result.warnings
         page_count = render_result.page_count
     except RenderError as e:
-        return CombinedReviewResult(
-            looks_professional=False,
-            visual_issues=[f"Rendering failed: {str(e)}"],
-            visual_feedback=str(e),
-            keyword_score=0.0,
-            experience_score=0.0,
-            education_score=0.0,
-            overall_fit_score=0.0,
-            disqualified=True,
-            ats_issues=["Cannot evaluate - rendering failed"],
-        ), None, 0, []
+        return (
+            CombinedReviewResult(
+                looks_professional=False,
+                visual_issues=[f"Rendering failed: {str(e)}"],
+                visual_feedback=str(e),
+                keyword_score=0.0,
+                experience_score=0.0,
+                education_score=0.0,
+                overall_fit_score=0.0,
+                disqualified=True,
+                ats_issues=["Cannot evaluate - rendering failed"],
+            ),
+            None,
+            0,
+            [],
+        )
 
     # Convert to image
     try:
         image_bytes, page_count = pdf_to_image(pdf_bytes)
     except Exception as e:
-        return CombinedReviewResult(
-            looks_professional=False,
-            visual_issues=[f"PDF to image conversion failed: {str(e)}"],
-            visual_feedback=str(e),
-            keyword_score=0.0,
-            experience_score=0.0,
-            education_score=0.0,
-            overall_fit_score=0.0,
-            disqualified=True,
-            ats_issues=["Cannot evaluate - PDF conversion failed"],
-        ), pdf_bytes, 0, render_warnings
+        return (
+            CombinedReviewResult(
+                looks_professional=False,
+                visual_issues=[f"PDF to image conversion failed: {str(e)}"],
+                visual_feedback=str(e),
+                keyword_score=0.0,
+                experience_score=0.0,
+                education_score=0.0,
+                overall_fit_score=0.0,
+                disqualified=True,
+                ats_issues=["Cannot evaluate - PDF conversion failed"],
+            ),
+            pdf_bytes,
+            0,
+            render_warnings,
+        )
 
     # Get resume text for ATS evaluation
     if optimized.pdf_text:

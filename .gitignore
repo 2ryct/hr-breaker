@@ -46,8 +46,4 @@ output/
 .DS_Store
 Thumbs.db
 
-# spaCy models
-en_core_web_*
 
-# Sentence transformers cache
-.cache/torch/

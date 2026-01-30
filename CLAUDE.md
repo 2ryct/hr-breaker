@@ -75,7 +75,7 @@ Filters run by priority (lower first). Default: parallel execution. Use `--seq` 
 | 3 | HallucinationChecker | Detect fabrications |
 | 4 | KeywordMatcher | TF-IDF keyword matching |
 | 5 | LLMChecker | Combined vision + ATS simulation |
-| 6 | VectorSimilarityMatcher | Sentence-transformer similarity |
+| 6 | VectorSimilarityMatcher | Gemini embedding similarity |
 | 7 | AIGeneratedChecker | AI content detection |
 
 To add filter: subclass `BaseFilter`, set `name` and `priority`, use `@FilterRegistry.register`

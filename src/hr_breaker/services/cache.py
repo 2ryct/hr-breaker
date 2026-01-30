@@ -34,7 +34,8 @@ class ResumeCache:
 
     def list_all(self) -> list[ResumeSource]:
         resumes = []
-        for path in self.cache_dir.glob("*.json"):
+        paths = sorted(self.cache_dir.glob("*.json"), key=lambda p: p.stat().st_mtime)
+        for path in paths:
             try:
                 data = json.loads(path.read_text())
                 resumes.append(ResumeSource(**data))
