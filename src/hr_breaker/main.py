@@ -121,8 +121,8 @@ with st.sidebar:
 # Main content
 st.markdown("### HR-Breaker")
 
-# Use cached resume if available
-if "source_resume" not in st.session_state and cache.list_all():
+# Use cached resume if available (but not if user explicitly cleared it)
+if "source_resume" not in st.session_state and not st.session_state.get("resume_cleared") and cache.list_all():
     cached_resumes = cache.list_all()
     if cached_resumes:
         st.session_state["source_resume"] = cached_resumes[-1]
@@ -147,6 +147,8 @@ with col_resume:
             if st.button("Change", key="clear_resume"):
                 st.session_state.pop("source_resume", None)
                 st.session_state.pop("last_result", None)
+                st.session_state["resume_uploader_key"] = st.session_state.get("resume_uploader_key", 0) + 1
+                st.session_state["resume_cleared"] = True
                 st.rerun()
         with st.expander("Preview", expanded=False):
             st.text(src.content)
@@ -155,10 +157,12 @@ with col_resume:
 
         resume_content = None
         if resume_method == "Upload":
+            uploader_key = f"resume_uploader_{st.session_state.get('resume_uploader_key', 0)}"
             uploaded_file = st.file_uploader(
                 "Upload (.tex, .md, .txt, .pdf)",
                 type=["tex", "md", "txt", "pdf"],
                 label_visibility="collapsed",
+                key=uploader_key,
             )
             if uploaded_file:
                 if uploaded_file.name.lower().endswith(".pdf"):
@@ -179,6 +183,7 @@ with col_resume:
             source = ResumeSource(content=resume_content, first_name=first_name, last_name=last_name)
             cache.put(source)
             st.session_state["source_resume"] = source
+            st.session_state.pop("resume_cleared", None)
             st.rerun()
 
 with col_job:
