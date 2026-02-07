@@ -391,53 +391,63 @@ if "last_result" in st.session_state:
     elif optimized:
         st.error("Failed to render PDF")
 
-    # Translate existing result to another language
-    if optimized and optimized.html and selected_language.code != "en":
-        if st.button(
-            f"🌐 Translate to {selected_language.native_name}",
-            use_container_width=True,
-            help="Translate this result without re-running optimization",
-        ):
-            try:
-                with st.status(f"Translating to {selected_language.native_name}...", expanded=True) as tr_status:
-                    def on_tr_status(msg):
-                        tr_status.update(label=msg)
-                        tr_status.write(msg)
+    # Translate existing result to another language (independent of "Resume language" option)
+    if optimized and optimized.html:
+        translate_targets = [lang for lang in SUPPORTED_LANGUAGES if lang.code != "en"]
+        if translate_targets:
+            tr_col1, tr_col2 = st.columns([2, 1])
+            with tr_col1:
+                translate_lang_code = st.selectbox(
+                    "Translate to…",
+                    options=[lang.code for lang in translate_targets],
+                    format_func=lambda c: next(lg.native_name for lg in translate_targets if lg.code == c),
+                    key="translate_target_lang",
+                    help="Translate this result without re-running optimization",
+                )
+            with tr_col2:
+                translate_clicked = st.button("🌐 Translate", use_container_width=True, key="translate_btn")
+            if translate_clicked and translate_lang_code:
+                translate_language = get_language(translate_lang_code)
+                try:
+                    with st.status(f"Translating to {translate_language.native_name}...", expanded=True) as tr_status:
+                        def on_tr_status(msg):
+                            tr_status.update(label=msg)
+                            tr_status.write(msg)
 
-                    translated = run_async(
-                        translate_and_rerender(optimized, selected_language, job, on_status=on_tr_status)
-                    )
-                    tr_status.update(label="Translation complete", state="complete")
+                        translated = run_async(
+                            translate_and_rerender(optimized, translate_language, job, on_status=on_tr_status)
+                        )
+                        tr_status.update(label="Translation complete", state="complete")
 
-                # Save translated PDF
-                if translated.pdf_bytes:
-                    source = st.session_state["source_resume"]
-                    tr_pdf_path = pdf_storage.generate_path(
-                        source.first_name, source.last_name, job.company, job.title,
-                        lang_code=selected_language.code,
-                    )
-                    tr_pdf_path.parent.mkdir(parents=True, exist_ok=True)
-                    tr_pdf_path.write_bytes(translated.pdf_bytes)
+                    # Save translated PDF
+                    if translated.pdf_bytes:
+                        source = st.session_state["source_resume"]
+                        tr_pdf_path = pdf_storage.generate_path(
+                            source.first_name, source.last_name, job.company, job.title,
+                            lang_code=translate_language.code,
+                        )
+                        tr_pdf_path.parent.mkdir(parents=True, exist_ok=True)
+                        tr_pdf_path.write_bytes(translated.pdf_bytes)
 
-                    pdf_record = GeneratedPDF(
-                        path=tr_pdf_path,
-                        source_checksum=source.checksum,
-                        company=job.company,
-                        job_title=job.title,
-                        first_name=source.first_name,
-                        last_name=source.last_name,
-                    )
-                    pdf_storage.save_record(pdf_record)
+                        pdf_record = GeneratedPDF(
+                            path=tr_pdf_path,
+                            source_checksum=source.checksum,
+                            company=job.company,
+                            job_title=job.title,
+                            first_name=source.first_name,
+                            last_name=source.last_name,
+                        )
+                        pdf_storage.save_record(pdf_record)
 
-                    # Update session state with translated result
-                    st.session_state["last_result"] = {
-                        **st.session_state["last_result"],
-                        "optimized": translated,
-                        "pdf_path": tr_pdf_path,
-                    }
-                    st.rerun()
-            except Exception as e:
-                st.error(f"Translation failed: {e}")
+                        # Update session state with translated result
+                        st.session_state["last_result"] = {
+                            **st.session_state["last_result"],
+                            "optimized": translated,
+                            "pdf_path": tr_pdf_path,
+                        }
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Translation failed: {e}")
 
     # Resume content preview
     if optimized:
