@@ -51,7 +51,7 @@ src/hr_breaker/
 ├── filters/         # Plugin-based filter system
 ├── services/        # Rendering, scraping, caching
 │   └── scrapers/    # Job scraper implementations
-├── utils/           # Helpers
+├── utils/           # Helpers (retry with backoff, HTML text extraction)
 ├── orchestration.py # Core optimization loop
 ├── main.py          # Streamlit UI
 ├── cli.py           # Click CLI
@@ -136,4 +136,13 @@ Key model config vars (litellm format):
 - `EMBEDDING_MODEL` - Embedding model (default: `gemini/text-embedding-004`)
 - `REASONING_EFFORT` - none/low/medium/high (default: `medium`)
 - `GEMINI_API_KEY` - API key for Gemini (also accepts `GOOGLE_API_KEY` for backward compat)
+- `RETRY_MAX_ATTEMPTS` - Max retry attempts for rate limits (default: `5`)
+- `RETRY_MAX_WAIT` - Max backoff wait in seconds (default: `60`)
+
+CLI options (settable via env vars, CLI flags override):
+- `HR_BREAKER_OUTPUT` - output path
+- `HR_BREAKER_MAX_ITERATIONS` - max optimization iterations
+- `HR_BREAKER_DEBUG` - enable debug mode (true/1/yes)
+- `HR_BREAKER_SEQ` - run filters sequentially (true/1/yes)
+- `HR_BREAKER_NO_SHAME` - lenient mode (true/1/yes)
 
