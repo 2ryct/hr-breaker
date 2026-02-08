@@ -18,7 +18,7 @@ dependencies = [
     "streamlit>=1.30",
     "pydantic>=2.0",
     "pydantic-ai",
-    "google-genai",
+    "pydantic-ai-litellm",
     "httpx",
     "beautifulsoup4",
     "scikit-learn>=1.0",

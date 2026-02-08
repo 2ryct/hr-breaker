@@ -6,8 +6,13 @@ from typing import Any
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
+from pydantic_ai_litellm import LiteLLMModel
 
 load_dotenv()
+
+# Backward compat: map GOOGLE_API_KEY -> GEMINI_API_KEY for litellm
+if "GEMINI_API_KEY" not in os.environ and os.environ.get("GOOGLE_API_KEY"):
+    os.environ["GEMINI_API_KEY"] = os.environ["GOOGLE_API_KEY"]
 
 
 def setup_logging() -> logging.Logger:
@@ -31,10 +36,9 @@ logger = setup_logging()
 class Settings(BaseModel):
     """Application settings."""
 
-    google_api_key: str = ""
-    gemini_pro_model: str = "gemini-3-pro-preview"
-    gemini_flash_model: str = "gemini-3-flash-preview"
-    gemini_thinking_budget: int | None = 8192
+    pro_model: str = "gemini/gemini-3-pro-preview"
+    flash_model: str = "gemini/gemini-3-flash-preview"
+    reasoning_effort: str = "medium"
     cache_dir: Path = Path(".cache/resumes")
     output_dir: Path = Path("output")
     max_iterations: int = 5
@@ -67,7 +71,7 @@ class Settings(BaseModel):
     keyword_max_missing_display: int = 10
 
     # Embedding settings
-    embedding_model: str = "gemini-embedding-001"
+    embedding_model: str = "gemini/text-embedding-004"
     embedding_output_dimensionality: int = 768
 
     # Agent limits
@@ -76,15 +80,10 @@ class Settings(BaseModel):
 
 @lru_cache
 def get_settings() -> Settings:
-    thinking_env = os.getenv("GEMINI_THINKING_BUDGET")
-    thinking_budget: int | None = 8192
-    if thinking_env is not None:
-        thinking_budget = int(thinking_env) if thinking_env else None
     return Settings(
-        google_api_key=os.getenv("GOOGLE_API_KEY", ""),
-        gemini_pro_model=os.getenv("GEMINI_PRO_MODEL") or "gemini-3-pro-preview",
-        gemini_flash_model=os.getenv("GEMINI_FLASH_MODEL") or "gemini-3-flash-preview",
-        gemini_thinking_budget=thinking_budget,
+        pro_model=os.getenv("PRO_MODEL") or "gemini/gemini-3-pro-preview",
+        flash_model=os.getenv("FLASH_MODEL") or "gemini/gemini-3-flash-preview",
+        reasoning_effort=os.getenv("REASONING_EFFORT") or "medium",
         fast_mode=os.getenv("HR_BREAKER_FAST_MODE", "true").lower()
         in ("true", "1", "yes"),
         # Scraper settings
@@ -119,7 +118,7 @@ def get_settings() -> Settings:
         keyword_tfidf_cutoff=float(os.getenv("KEYWORD_TFIDF_CUTOFF", "0.1")),
         keyword_max_missing_display=int(os.getenv("KEYWORD_MAX_MISSING_DISPLAY", "10")),
         # Embedding settings
-        embedding_model=os.getenv("EMBEDDING_MODEL", "gemini-embedding-001"),
+        embedding_model=os.getenv("EMBEDDING_MODEL", "gemini/text-embedding-004"),
         embedding_output_dimensionality=int(
             os.getenv("EMBEDDING_OUTPUT_DIMENSIONALITY", "768")
         ),
@@ -128,13 +127,17 @@ def get_settings() -> Settings:
     )
 
 
+def get_pro_model() -> LiteLLMModel:
+    return LiteLLMModel(model_name=get_settings().pro_model)
+
+
+def get_flash_model() -> LiteLLMModel:
+    return LiteLLMModel(model_name=get_settings().flash_model)
+
+
 def get_model_settings() -> dict[str, Any] | None:
-    """Get GoogleModelSettings with thinking config if budget is set."""
+    """Get model settings with reasoning effort config."""
     settings = get_settings()
-    if settings.gemini_thinking_budget is not None:
-        return {
-            "google_thinking_config": {
-                "thinking_budget": settings.gemini_thinking_budget
-            }
-        }
+    if settings.reasoning_effort and settings.reasoning_effort != "none":
+        return {"reasoning_effort": settings.reasoning_effort}
     return None

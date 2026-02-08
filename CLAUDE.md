@@ -18,8 +18,8 @@ Tool for optimizing resumes for job postings and passing automated filters.
 ## Architecture
 
 1. Streamlit frontend
-2. Pydantic-AI LLM agent framework
-3. Google Gemini models (configurable via env)
+2. Pydantic-AI LLM agent framework + pydantic-ai-litellm (any LLM provider)
+3. Default: Google Gemini models (configurable to OpenAI, Anthropic, etc. via litellm)
 4. Modular filter system - easy to add new checks
 5. Resume caching - input once, apply to many jobs
 
@@ -30,14 +30,15 @@ Unit-tests: pytest
 HTTP library: httpx
 
 Pydantic-AI docs: https://ai.pydantic.dev/llms-full.txt
+LiteLLM docs: https://docs.litellm.ai/docs/
 
 ## Guidelines
 
 When debugging use 1-2 iterations only (costs money). Use these settings:
 ```
-GEMINI_THINKING_BUDGET=1024
-GEMINI_PRO_MODEL=gemini-2.5-flash
-GEMINI_FLASH_MODEL=gemini-2.5-flash
+REASONING_EFFORT=low
+PRO_MODEL=gemini/gemini-2.5-flash
+FLASH_MODEL=gemini/gemini-2.5-flash
 ```
 
 ## Current Implementation
@@ -75,7 +76,7 @@ Filters run by priority (lower first). Default: parallel execution. Use `--seq` 
 | 3 | HallucinationChecker | Detect fabricated claims not supported by original resume |
 | 4 | KeywordMatcher | TF-IDF keyword matching |
 | 5 | LLMChecker | Combined vision + ATS simulation |
-| 6 | VectorSimilarityMatcher | Gemini embedding similarity |
+| 6 | VectorSimilarityMatcher | Embedding similarity (via litellm) |
 | 7 | AIGeneratedChecker | AI content detection |
 
 To add filter: subclass `BaseFilter`, set `name` and `priority`, use `@FilterRegistry.register`
@@ -117,4 +118,11 @@ uv run pytest tests/
 ### Environment Variables
 
 See config options in `.env.example` and `config.py`
+
+Key model config vars (litellm format):
+- `PRO_MODEL` - Pro model (default: `gemini/gemini-3-pro-preview`)
+- `FLASH_MODEL` - Flash model (default: `gemini/gemini-3-flash-preview`)
+- `EMBEDDING_MODEL` - Embedding model (default: `gemini/text-embedding-004`)
+- `REASONING_EFFORT` - none/low/medium/high (default: `medium`)
+- `GEMINI_API_KEY` - API key for Gemini (also accepts `GOOGLE_API_KEY` for backward compat)
 
