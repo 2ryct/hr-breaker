@@ -55,7 +55,7 @@ src/hr_breaker/
 ├── orchestration.py # Core optimization loop
 ├── main.py          # Streamlit UI
 ├── cli.py           # Click CLI
-├── config.py        # Settings
+├── config.py        # Settings (pydantic-settings BaseSettings, auto-reads env vars)
 └── litellm_patch.py # Monkey-patch for pydantic-ai-litellm vision support
 ```
 
@@ -128,7 +128,7 @@ Repro: `uv run python scripts/repro_vision_bug.py` (without patch) vs `uv run py
 
 ### Environment Variables
 
-See config options in `.env.example` and `config.py`
+`Settings` uses `pydantic-settings` `BaseSettings` — env vars are auto-mapped from uppercased field names. All settings in `config.py` are configurable via env vars. See `.env.example` for the full list.
 
 Key model config vars (litellm format):
 - `PRO_MODEL` - Pro model (default: `gemini/gemini-3-pro-preview`)
