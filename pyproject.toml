@@ -19,6 +19,7 @@ dependencies = [
     "pydantic>=2.0",
     "pydantic-ai",
     "pydantic-ai-litellm",
+    "tenacity>=8.0",
     "httpx",
     "beautifulsoup4",
     "scikit-learn>=1.0",

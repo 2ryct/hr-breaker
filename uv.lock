@@ -1488,6 +1488,7 @@ dependencies = [
     { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "streamlit" },
+    { name = "tenacity" },
     { name = "watchdog" },
     { name = "weasyprint" },
 ]
@@ -1520,6 +1521,7 @@ requires-dist = [
     { name = "python-dotenv" },
     { name = "scikit-learn", specifier = ">=1.0" },
     { name = "streamlit", specifier = ">=1.30" },
+    { name = "tenacity", specifier = ">=8.0" },
     { name = "watchdog", specifier = ">=6.0.0" },
     { name = "weasyprint", specifier = ">=60.0" },
 ]
