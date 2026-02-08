@@ -2,7 +2,7 @@
 
 Resume optimization tool that transforms any resume into a job-specific, ATS-friendly PDF.
 
-![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
+![Python 3.10–3.13](https://img.shields.io/badge/python-3.10--3.13-blue.svg)
 
 ## Features
 
@@ -13,8 +13,11 @@ Resume optimization tool that transforms any resume into a job-specific, ATS-fri
 - **No fabrication** - Hallucination detection prevents made-up claims
 - **Opinionated formatting** - Follows proven resume guidelines (one page, no fluff, etc.)
 - **Multi-filter validation** - ATS simulation, keyword matching, structure checks
+- **User instructions** - Guide the optimizer with extra context ("Focus on Python", "Add K8s cert")
+- **Multi-language output** - Optimize in English, then translate (e.g. `-l ru` for Russian)
 - **Web UI + CLI** - Streamlit dashboard or command-line
 - **Debug mode** - Inspect optimization iterations
+- **Cross-platform** - Works on macOS, Linux, and Windows
 
 ## How It Works
 
@@ -61,6 +64,12 @@ uv run hr-breaker optimize resume.txt job.txt
 
 # Debug mode (saves iterations)
 uv run hr-breaker optimize resume.txt job.txt -d
+
+# User instructions - guide the optimizer
+uv run hr-breaker optimize resume.txt job.txt -i "Focus on Python, add K8s cert"
+
+# Translate output to another language
+uv run hr-breaker optimize resume.txt https://example.com/job -l ru
 
 # Lenient mode - relaxes content constraints but still prevents fabricating experience. Use with caution!
 uv run hr-breaker optimize resume.txt job.txt --no-shame

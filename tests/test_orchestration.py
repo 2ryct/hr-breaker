@@ -92,8 +92,8 @@ class TestRunFiltersParallel:
 
 class TestOptimizeForJobTranslationGating:
     @pytest.mark.asyncio
-    async def test_skip_translation_when_validation_fails(self):
-        """Should NOT translate if optimization didn't pass filters."""
+    async def test_translate_even_when_validation_fails(self):
+        """Translation should always run when language is set, even if filters didn't pass."""
         from hr_breaker.models.language import get_language
 
         russian = get_language("ru")
@@ -127,4 +127,4 @@ class TestOptimizeForJobTranslationGating:
 
             await optimize_for_job(source, job=job, language=russian, max_iterations=1)
 
-            mock_translate.assert_not_called()
+            mock_translate.assert_called_once()
