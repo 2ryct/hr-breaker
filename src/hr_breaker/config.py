@@ -84,6 +84,10 @@ class Settings(BaseModel):
     # Agent limits
     agent_name_extractor_chars: int = 2000
 
+    # Retry settings
+    retry_max_attempts: int = 5
+    retry_max_wait: float = 60.0
+
 
 @lru_cache
 def get_settings() -> Settings:
@@ -131,6 +135,9 @@ def get_settings() -> Settings:
         ),
         # Agent limits
         agent_name_extractor_chars=int(os.getenv("AGENT_NAME_EXTRACTOR_CHARS", "2000")),
+        # Retry settings
+        retry_max_attempts=int(os.getenv("RETRY_MAX_ATTEMPTS", "5")),
+        retry_max_wait=float(os.getenv("RETRY_MAX_WAIT", "60")),
     )
 
 
